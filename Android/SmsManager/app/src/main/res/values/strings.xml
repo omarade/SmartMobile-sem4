@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmsManager</string>
+    <string name="number">number</string>
+    <string name="EnterYourMessage">Enter your message</string>
+</resources>
