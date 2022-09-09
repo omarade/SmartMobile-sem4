@@ -1,15 +1,20 @@
 package nl.fontys.smsmanager
 
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.SmsManager
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import java.util.jar.Manifest
 
 
@@ -21,21 +26,27 @@ class MainActivity : AppCompatActivity() {
     lateinit var textMessage : EditText
     lateinit var button : Button
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
 
         number = findViewById(R.id.editTextPhone)
         textMessage = findViewById(R.id.editTextTextMultiLine)
         button = findViewById(R.id.btnSend)
 
-//        button.isEnabled = false
-//
-//        if (checkPermission(android.Manifest.permission.SEND_SMS)) {
-//            button.isEnabled = true
-//        } else {
-//            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.SEND_SMS), SEND_SMS_PERMISSION_CODE)
-//        }
+        button.isEnabled = false
+
+        if (checkPermission(android.Manifest.permission.SEND_SMS)) {
+            button.isEnabled = true
+        } else {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.SEND_SMS), SEND_SMS_PERMISSION_CODE)
+        }
     }
 
 
@@ -47,12 +58,33 @@ class MainActivity : AppCompatActivity() {
             return null;
         }
 
+        if (checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)){
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    // Got last known location. In some rare situations this can be null.
+                    Log.d("Location", location.toString())
+                }
+        }
+
+
+
+
         if (checkPermission(android.Manifest.permission.SEND_SMS)) run {
+            button.isEnabled = true
+
+//            var locationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+//            locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, 0, 0, this)
+
             var smsManager: SmsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(phoneNumber, null, txtMessage, null, null)
+
+            button.isEnabled = false
+            textMessage.text.clear()
+
             Toast.makeText(this, "Message Sent!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.SEND_SMS), SEND_SMS_PERMISSION_CODE)
         }
         return null
     }
