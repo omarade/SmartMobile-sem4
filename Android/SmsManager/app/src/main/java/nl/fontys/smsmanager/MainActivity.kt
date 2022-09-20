@@ -26,14 +26,10 @@ class MainActivity : AppCompatActivity() {
     lateinit var textMessage : EditText
     lateinit var button : Button
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
 
         number = findViewById(R.id.editTextPhone)
@@ -58,22 +54,11 @@ class MainActivity : AppCompatActivity() {
             return null;
         }
 
-        if (checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)){
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location : Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    Log.d("Location", location.toString())
-                }
-        }
-
 
 
 
         if (checkPermission(android.Manifest.permission.SEND_SMS)) run {
             button.isEnabled = true
-
-//            var locationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-//            locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, 0, 0, this)
 
             var smsManager: SmsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(phoneNumber, null, txtMessage, null, null)
