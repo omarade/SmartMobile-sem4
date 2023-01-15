@@ -1,0 +1,119 @@
+name: StockApp
+description: ""
+defaultPage: List
+
+resources:
+  inventory_table:
+    roles: [$public] # This makes all person resource actions public by default.
+    schema:
+      type: object
+      additionalProperties: false # Custom properties are disallowed to ensure the shape of each person resource is fixed.
+      required:
+        - brand
+        - type
+        - amount
+      properties:
+        brand:
+          type: string
+        type:
+          type: string
+        amount:
+          type: integer
+        cost_price:
+          type: string
+        selling_price:
+          type: string
+        image:
+          type: string
+          format: binary
+
+pages:
+  - name: List
+    icon: scroll
+    blocks:
+      - type: data-loader
+        version: 0.20.28
+        actions:
+          onLoad:
+            type: resource.query
+            resource: inventory_table
+        events:
+          emit:
+            data: inventory_table
+          listen: 
+            refresh: refreshNotes
+
+      - type: list
+        version: 0.20.28
+        parameters:
+          header: { prop: brand }
+          image: 
+            - prop: image
+          fields:
+            - value: { prop: brand }
+            - value: { prop: type }
+            - value: { prop: amount }  
+            - value: { prop: cost_price }  
+            - value: { prop: selling_price }  
+        events:
+          listen:
+            data: inventory_table
+        actions:
+          onClick:
+            type: dialog
+            closable: true
+            blocks:
+              - type: form
+                version: 0.20.28
+                parameters:
+                  fields:
+                    - type: string
+                      name: brand
+                      label: Brand
+                      requirements:
+                        - required: true
+                    - type: string
+                      name: type
+                      label: Type
+                actions:
+                  onSubmit:
+                    type: resource.update
+                    resource: inventory_table
+                    onSuccess:
+                      type: dialog.ok
+            onSuccess:
+              type: event
+              event: refreshNotes
+
+  - name: Overview
+    icon: scroll
+    blocks:
+      - type: data-loader
+        version: 0.20.28
+        actions:
+          onLoad:
+            type: resource.query
+            resource: inventory_table
+        events:
+          emit:
+            data: notes
+      - type: table
+        version: 0.20.28
+        parameters:
+          fields:
+            - value: { prop: brand }
+              label: Brand 
+            - value: { prop: type }
+              label: Type 
+            - value: { prop: amount }  
+              label: Amount
+            - value: { prop: cost_price }  
+              label: Cost Price 
+            - value: { prop: selling_price }  
+              label: Selling Price 
+            - value: { prop: image }  
+              label: Image          
+        events:
+          listen:
+            data: notes
+
