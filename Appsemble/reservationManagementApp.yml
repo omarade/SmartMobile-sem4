@@ -1,0 +1,75 @@
+name: Restaurant
+description: The tables and reservations of a restaurant
+defaultPage: Restaurant
+
+pages:
+  - name: Restaurant
+    icon: globe-europe
+    type: tabs
+    tabs:
+      - name: Tables
+        blocks:
+          - type: data-loader
+            version: 0.20.30
+            actions:
+              onLoad:
+                url: https://api-test.mrwinston.com/api/tables?app_name=api_test&api_key=yx5htHfd4iFhMCk5
+                type: request
+                method: post
+                remapAfter: { prop: data }
+            events:
+              emit:
+                data: tables
+          - type: table
+            version: 0.20.30
+            events:
+              listen:
+                data: tables
+            parameters:
+              fields:
+                - value: { prop: number }
+                  label: Number
+                - value: { prop: _id }
+                  label: ID
+                - value: { prop: shape }
+                  label: Shape
+                - value: { prop: seats }
+                  label: Seats
+
+      - name: Reservations
+        blocks:
+          - type: data-loader
+            version: 0.20.30
+            actions:
+              onLoad:
+                url: https://api-test.mrwinston.com/api/reservations/list?app_name=api_test&api_key=yx5htHfd4iFhMCk5
+                type: request
+                method: post
+                body:
+                  object.from:
+                    limit: 10
+                    sort:
+                      object.from:
+                        createdAt: -1
+                onSuccess:
+                  type: log
+            events:
+              emit:
+                data: reservations
+          - type: table
+            version: 0.20.30
+            events:
+              listen:
+                data: reservations
+            parameters:
+              fields:
+                - value: { prop: startDate }
+                  label: Date
+                - value: { prop: name }
+                  label: Name
+                - value: { prop: email }
+                  label: Email
+                - value: { prop: phone }
+                  label: Phone
+                - value: { prop: people }
+                  label: People

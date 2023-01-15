@@ -1,0 +1,269 @@
+name: Reservation app
+description: ""
+defaultPage: Home
+
+theme:
+  primaryColor: '#e4372b'
+
+pages:
+  - name: Home
+    blocks:
+      - type: markdown
+        layout: static
+        version: 0.17.2
+        parameters:
+          content:
+            string.format:
+              messageId: welcome
+              template: |
+                '<h2>Start by making a reservation!</h2>
+
+                Enjoy a tasty food with people you love in a home atmosphere!
+                <h4>Click on the button to start</h4>'
+
+      - type: button-list
+        version: 0.17.2
+        parameters:
+          buttons:
+            - label:
+                string.format:
+                  messageId: Home
+                  template: Start
+              outlined: true
+              color: primary
+        actions:
+          onClick:
+            type: link
+            to: Contact details
+
+
+  - name: Contact details
+    type: flow
+    actions:
+      onFlowFinish:
+        type: resource.create
+        resource: reservation
+        remapBefore: { null.strip } 
+        
+        onSuccess:
+          url: https://api-test.mrwinston.com/api/reservations/create?app_name=api_test&api_key=yx5htHfd4iFhMCk5
+          type: request
+          method: post
+          body:
+            object.from:
+              date: { prop: datetime }
+              duration: 60
+              people: { prop: people }
+              email: { prop: email }
+              name: { prop: fullname }
+              phone: { prop: phone}
+          onSuccess:
+            type: link
+            to: Success     
+   
+    steps:
+      - name: Step 1 - Reservation Info
+        blocks:
+          - type: form
+            version: 0.17.2
+            header: 
+              string.format:
+                  messageId: Step 1
+                  template: 1. Infromation of the reservation
+            parameters:
+              fields:
+              - label: Persons
+                name: people
+                type: integer
+                requirements: [required: true]   
+              
+              - label: Date
+                name: datetime              
+                type: date-time
+                requirements:
+                  - required: true
+                  - from: [ { date.now: {} } ]
+                  - to: [ { date.now: {} }, { date.add: 30d } ]
+                icon: calendar-alt
+            actions:
+              onSubmit:
+                type: flow.next
+
+      - name: Step 2 - Personal Info
+        blocks:
+          - type: form
+            version: 0.17.2
+            header:
+              string.format:
+                  messageId: Step 2
+                  template: 2. Information about the person
+            parameters:
+              fields:
+              - label: Name
+                name: fullname
+                type: string
+                requirements: [required: true]
+              - label: Phone
+                name: phone
+                type: string
+                requirements: [required: true]
+              - label: E-mail
+                name: email
+                type: string
+                requirements: [required: true]
+              - label: Extra info
+                multiline: true
+                name: description
+                type: string
+            actions:
+              onSubmit:
+                type: flow.next
+              onPrevious:
+                type: flow.back
+
+      - name: Step 3 - Confirmation
+        blocks:
+          - type: detail-viewer
+            version: 0.20.30
+            parameters:
+              fields:
+                - value: { prop: fullname }
+                  label: Name
+                - value: { prop: phone }
+                  label: Phone
+                - value: { prop: email }
+                  label: Email address
+                - value: { prop: people }
+                  label: Number of Guests
+                - value: { prop: datetime }
+                  label: Date & Time
+                  # type: file         
+          - type: button-list
+            version: 0.17.2
+            parameters:
+              buttons:
+                - label:
+                    string.format:
+                      messageId: s
+                      template: Submit
+                  outlined: true
+                  color: primary
+            actions:
+              onClick:
+                type: flow.finish               
+
+                              
+  - name: Reservations
+    blocks:
+      - type: data-loader
+        version: 0.20.28
+        actions:
+          onLoad:
+            type: request
+            method: post
+            url: https://api-test.mrwinston.com/api/reservations/list?app_name=api_test&api_key=yx5htHfd4iFhMCk5
+            body: 
+              object.from:
+                sort:
+                  object.from:
+                    createdAt: -1
+                filter:
+                  object.from:
+                    name: "Omar2"
+                limit: 10
+        events:
+          emit:
+            data: notes
+      - type: table
+        version: 0.20.28
+        parameters:
+          fields:
+            - value: { prop: _numericId }
+              label: ID
+            - value: { prop: name }
+              label: Name
+            - value: { prop: phone }
+              label: Phone
+            - value: { prop: email }
+              label: Email
+            - value: { prop: people }
+              label: Persons
+            - value: { prop: createdAt }
+              label: Date & Time
+        events:
+          listen:
+            data: notes
+      - type: button-list
+        version: 0.17.2
+        parameters:
+          buttons:
+            - label:
+                string.format:
+                  messageId: done
+                  template: Home
+              outlined: true
+              color: primary
+        actions:
+          onClick:
+            type: link
+            to: Home
+
+  - name: Success
+    blocks:
+      - type: markdown       
+        layout: static
+        version: 0.17.2
+        parameters:
+          content:
+            string.format:
+              messageId: success
+              template: |
+                '<h2><span class="icon has-text-success"><i class="fas fa-check-circle"></i></span> Thanks for your reservation!</h2>
+
+                We got your reservation.
+                We are looking forward for your visit!
+
+                You recieved a confirmation e-mail.
+
+                If you have any question please call: (013) 123 45 67.'
+
+      - type: button-list
+        version: 0.17.2
+        parameters:
+          buttons:
+            - label:
+                string.format:
+                  messageId: returnHome
+                  template: Home
+              outlined: true
+              color: primary
+        actions:
+          onClick:
+            type: link
+            to: Home
+
+resources:
+  reservation:
+    roles: [$public] # This makes all reservation resource actions public by default.
+    schema:
+      type: object
+      additionalProperties: false # Custom properties are disallowed to ensure the shape of each person resource is fixed.
+      properties:
+        fullname:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        description:
+          type: string
+        picture:
+          type: string
+          format: binary
+        people:
+          type: integer
+          minimum: 1
+        datetime:
+          type: string
+          format: date-time
